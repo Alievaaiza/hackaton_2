@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
-
+from applications.account.utils import send_activation_email
 from applications.account.models import Profile
 
 User = get_user_model()
@@ -23,13 +23,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         password = validated_data.get('password')
         password_confirmation = validated_data.get('password_confirmation')
         if password != password_confirmation:
-            raise serializers.ValidationError('Passwords Error')
+            raise serializers.ValidationError('Password error')
         return validated_data
 
     def create(self, validated_data):
         email = validated_data.get('email')
         password = validated_data.get('password')
         user = User.objects.create_user(email, password)
+        send_activation_email(user.email, user.activation_code)
         profile = Profile.objects.create(user_id=user.id)
         return user
 
@@ -49,7 +50,6 @@ class LoginSerializer(serializers.Serializer):
             if not user:
                 msg = 'No login with provided credentials'
                 raise serializers.ValidationError(msg, code='authorization')
-
         else:
             msg = 'No "password" or "email"'
             raise serializers.ValidationError(msg, code='authorization')
@@ -63,3 +63,4 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = '__all__'
+

@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 virt
 .idea/
+env
+venv
+.env
